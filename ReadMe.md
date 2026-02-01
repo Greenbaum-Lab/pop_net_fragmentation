@@ -1,9 +1,25 @@
-#  Population genetics networks
+#  Network-based genetic monitoring of landscape fragmentation
 
-**Fragmentation** is a Python-based toolkit developed for analyzing the genetic effects of reduced connectivity in population networks. The repository provides streamlined scripts for processing network and genetic data, computing a variety of statistics, and generating visualizations, with optional C acceleration for computationally intensive tasks.
+The repository includes a Python-based toolkit developed for analyzing the genetic effects of changes in connectivity in population networks.
+For more information read the full article of Peled et al. at DOI
 
-## Key Components
+## Sections
 
+### genetic_metrics 
+Pipeline for calculating and analyzing population genetic metrics (heterozygosity, F_ST) from network fragmentation simulations.
+
+- **`run_pipeline.py`** – Entry point script that generates RGG networks, applies all 8 fragmentation types (rand, cor, intr, reg, div, dist, opt, wrst) in parallel, and serializes results to pickle files.
+
+- **`funcs_run_pipeline.py`** – Core pipeline logic: maps fragmentation keys to functions, runs single-replicate fragmentation (graph → migration sequence → coalescence/F_ST matrices → het/fst distributions), and orchestrates parallel execution over replicates.
+
+- **`mean_genetics.py`** – Post-processing utilities: normalizes and combines replicate-level heterozygosity and F_ST data across fragmentation types, and plots mean ± SD over fragmentation steps.
+
+- **`Transformation.py`** – Wrapper around C library (`libmigration.so`) for transforming migration matrices into coalescence time and F_ST matrices using ctypes; defines `Migration` and `Coalescence` classes.
+
+- **`libmigration.c`** – C implementation using GSL for solving linear systems: converts migration matrices to coefficient matrices and computes coalescence times.
+
+
+**Note:** The directory also imports from `stats_utils.py`, `processes.py`, `networks_generator.py`, and `funcs.py` located at the repository root. [View all files in this directory on GitHub](https://github.com/Greenbaum-Lab/pop_net_fragmentation/tree/main/genetic_metrics).
 - **`Transformation.py`**  
   Implements mathematical transformations between migration matrices, coalescence times, and Fst statistics, including routines for component detection and conservative migration matrix generation, using both Python and optional C acceleration.
 
@@ -62,9 +78,8 @@
   Supplies C routines and a compiled library for efficient migration, coalescence, and Fst matrix computations, used as an optional backend for high-performance operations.
 
 
-## License
-This repository is provided for academic and research purposes. Please see the repository or contact the authors for licensing details.
 
 ## Contact
+This repository is provided for academic and research purposes.
 For questions, suggestions, or contributions, please contact ohad.peled@mail.huji.ac.il
-If you need further customization or more detailed usage examples, just ask!
+
