@@ -19,67 +19,74 @@ Pipeline for calculating and analyzing population genetic metrics (heterozygosit
 - **`libmigration.c`** – C implementation using GSL for solving linear systems: converts migration matrices to coefficient matrices and computes coalescence times.
 
 
-**Note:** The directory also imports from `stats_utils.py`, `processes.py`, `networks_generator.py`, and `funcs.py` located at the repository root. [View all files in this directory on GitHub](https://github.com/Greenbaum-Lab/pop_net_fragmentation/tree/main/genetic_metrics).
-- **`Transformation.py`**  
-  Implements mathematical transformations between migration matrices, coalescence times, and Fst statistics, including routines for component detection and conservative migration matrix generation, using both Python and optional C acceleration.
 
-- **`processes.py`**  
-  Contains core simulation logic for different fragmentation processes, including random, correlated, distance-based, and optimal edge removal routines.
+### networks
 
-- **`funcs_initial_data.py`**  
-  Generates and normalizes initial networks, runs fragmentation replicates, and summarizes genetic statistics for various network models and fragmentation types.
+Utilities for generating random-geometric graphs (RGGs) and computing network topology metrics across fragmentation steps.
 
-- **`run_pipeline.py`**  
-  Script to run the full fragmentation analysis pipeline, including network creation, simulation for all fragmentation types, and batch pickle output.
+- **`networks_generator.py`** – Creates random-geometric graphs with target edge counts and converts undirected networks to directed/asymmetric weighted graphs using mass-balanced sampling (conservative migration constraint: Σⱼ mᵢⱼ = Σⱼ mⱼᵢ).
 
-- **`funcs.py`**  
-  Defines data structures and utility functions for loading, processing, and summarizing fragmentation simulation results, including node/step annotation and component analysis.
+- **`network_structures.py`** – Computes topological metrics (giant component fraction, isolated nodes, secondary components, "waste" components) per graph and aggregates over fragmentation steps and replicates; includes stacked-area plotting.
 
-- **`mean_genetics.py`**  
-  Calculates and visualizes mean heterozygosity and Fst across fragmentation types, with normalization and grouped analysis.
 
-- **`distributions.py`**  
-  Extracts, filters, and visualizes distributions of genetic diversity measures (e.g., heterozygosity, Fst) at fixed fragmentation intervals.
+### fragmentation
 
-- **`centrality.py`**  
-  Computes node centralities (degree, betweenness) for single or multiple networks, aiding network fragmentation analysis.
+Implements 8 different edge-removal strategies for simulating network fragmentation scenarios.
 
-- **`centrality_corr.py`**  
-  Analyzes correlations between node centrality measures and heterozygosity, with tools for merging, filtering, and plotting these relationships across fragmentation experiments.
+- **`processes.py`** – Defines all fragmentation algorithms, each returning a sequence of progressively fragmented networks:
+  - **`remove_edge_random`** – Randomly delete bidirectional edges until none remain.
+  - **`remove_edge_intrusive`** – Pick a random connected node; remove all its incident edges; repeat.
+  - **`remove_edge_correlated`** – Always remove an edge adjacent to the previously deleted one; fall back to random when isolated.
+  - **`remove_edge_distance`** – Remove edges from longest to shortest (requires `pos` node attribute).
+  - **`remove_edge_regressive`** – Progressively strip edges starting with western-most nodes (requires `pos`).
+  - **`remove_edge_divisive`** – Draw random border-to-border dividing lines; remove intersected edges west-to-east; repeat.
+  - **`remove_edge_optimal`** – Re-compute edge betweenness centrality after each removal; drop the lowest-betweenness edge.
+  - **`remove_edge_worst`** – Drop the edge with maximum betweenness centrality at each step.
 
-- **`distance_matrices.py`**  
-  Calculates shortest path, Euclidean, and random walk distance matrices for network nodes using NetworkX and parallel processing.
 
-- **`giant_comp.py`**  
-  Analyzes the relationship between the size of the largest network component and genetic diversity, including binning and plotting tools.
+### early_warning
 
-- **`mantel_plot.py`**  
-  Plots Mantel test results and correlations between genetic and distance matrices across fragmentation types and steps.
+Functions for analyzing heterozygosity trajectories at late fragmentation stages to identify early warning signals of population collapse.
 
-- **`mantel_test.py`**  
-  Performs Mantel tests to assess the correlation between genetic and distance matrices, supporting parallel and type-specific analyses.
+- **`early_warning.py`** – Tools for detecting critical transitions in fragmented populations:
 
-- **`network_structures.py`**  
-  Computes, aggregates, and visualizes network structure metrics (giant component, isolated nodes, secondary components, waste) for single and multiple replicates.
+### correlations
 
-- **`nodes_matrices.py`**  
-  Provides tools for analyzing node-level statistics and correlations, including centrality and heterozygosity relationships.
+Functions for testing and visualizing correlations between genetic distance (F_ST), network topology (centrality), and spatial/graph-theoretic distance metrics.
 
-- **`pop_ind.py`**  
-  Utilities for selecting and plotting heterozygosity trajectories of individual nodes in population fragmentation simulations.
+- **`run_cor.py`** – Entry point script: loads fragmentation data, computes QAP tests for F_ST vs. distance matrices (resistance/path/etc.), and generates plots.
 
-- **`variance`**  
-  Computes and plots the variance of heterozygosity across fragmentation types and steps, returning per-replica and aggregated variance statistics.
+- **`cor_test.py`** – Implements QAP (Quadratic Assignment Procedure) correlation tests between F_ST and network distance matrices (Euclidean, shortest path, random walk, resistance). Handles disconnected graphs by computing per-component correlations weighted by size and combining p-values via Fisher's method.
 
-- **`early_warning.py`**  
-  Computes early warning indicators for genetic collapse or transitions (e.g., standard deviation, skewness, kurtosis, return rate) and provides plotting utilities.
+- **`cor_plot.py`** – Plotting utilities for Mantel correlation results: line plots of correlation vs. fragmentation step (filtered by p < 0.05), and scatter plots of F_ST vs. distance for individual steps.
 
-- **`libmigration.c` / `libmigration.so`**  
-  Supplies C routines and a compiled library for efficient migration, coalescence, and Fst matrix computations, used as an optional backend for high-performance operations.
+- **`mantel_test.py`** – Mantel test implementation (wrapper around `mantel` package) for correlating F_ST and distance matrices, with support for disconnected networks via weighted component-wise aggregation. Includes parallel processing for multi-step/multi-replica analyses.
 
+- **`distance_matrices.py`** – Computes pairwise distance matrices from networks:
+
+- **`centrality.py`** – Computes node-level centrality measures (degree, betweenness) for single networks, across replicates, and across fragmentation types; exports to CSV.
+
+- **`centrality_corr.py`** – Merges centrality data with heterozygosity data, computes Pearson correlations between centrality measures and heterozygosity per (frag_type, replica, step), and exports results.
+
+- **`nodes_matrices.py`** – Utilities for node-level correlation analysis.
+
+### other
+
+Miscellaneous analysis and plotting utilities for exploring heterozygosity distributions, variance, giant component relationships, and robustness tests.
+
+- **`distributions.py`** – Tools for visualizing heterozygosity/F_ST distributions across fragmentation steps:
+
+- **`giant_comp.py`** – Analyzes relationship between giant component size and heterozygosity:
+
+- **`pop_ind.py`** – Individual node trajectory analysis:
+
+- **`robustness_tests.py`** – Robustness validation for conservative migration balancing (`project_to_conservative`): generates random fragmentation replicates, tracks migration matrix entries before/after balancing at each step, and exports detailed tidy DataFrame of changes.
+
+- **`variance.py`** – Heterozygosity variance analysis:
 
 
 ## Contact
 This repository is provided for academic and research purposes.
 For questions, suggestions, or contributions, please contact ohad.peled@mail.huji.ac.il
+
 
