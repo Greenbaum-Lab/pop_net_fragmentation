@@ -1,6 +1,7 @@
 #  Network-based genetic monitoring of landscape fragmentation
 
 The repository includes a Python-based toolkit developed for analyzing the genetic effects of changes in connectivity in population networks.
+C wrapper requires a linux system to run.
 For more information read the full article of Peled et al. at DOI
 
 ## Sections
@@ -88,5 +89,6 @@ Miscellaneous analysis and plotting utilities for exploring heterozygosity distr
 ## Contact
 This repository is provided for academic and research purposes.
 For questions, suggestions, or contributions, please contact ohad.peled@mail.huji.ac.il
+
 
 
